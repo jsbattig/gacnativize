@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 
 // ReSharper disable once CheckNamespace
 namespace Ascentis.CmdTools
@@ -50,15 +51,17 @@ namespace Ascentis.CmdTools
         protected string ExcludeOrIgnore(string file)
         {
             var newFileName = ProcessFileName(file);
-            if (newFileName == "" || ExceptionList.Contains("-" + file))
+            var fileNameOnly = Path.GetFileName(file);
+            if (newFileName == "" || ExceptionList.Contains("-" + fileNameOnly))
             {
-                FailedFilesList.Add(file);
+                if (fileNameOnly != null)
+                    FailedFilesList.Add(fileNameOnly[0] == '-' ? fileNameOnly : '-' + fileNameOnly);
                 return "";
             }
-            if (!ExceptionList.Contains(file)) 
+            if (!ExceptionList.Contains(Path.GetFileName(newFileName))) 
                 return newFileName;
-            FailedFilesList.Add(file);
-            Wl($"Excluding file \"{file}\"\r\n", ConsoleColor.Yellow);
+            FailedFilesList.Add(Path.GetFileName(newFileName));
+            Wl($"Excluding file \"{newFileName}\"\r\n", ConsoleColor.Yellow);
             return "";
         }
 
@@ -74,7 +77,7 @@ namespace Ascentis.CmdTools
             PreprocessOutput(file, output, out var consoleColor);
             p.WaitForExit();
             if (p.ExitCode != 0)
-                FailedFilesList.Add(file);
+                FailedFilesList.Add(Path.GetFileName(file));
             Wl(output, p.ExitCode == 0 ? consoleColor : ConsoleColor.Red);
         }
     }

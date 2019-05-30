@@ -21,7 +21,7 @@ namespace Ascentis.CmdTools
                 string fileName;
                 if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
-                var p = BuildProcess(processFile, $"/i {fileName} /nologo");
+                var p = BuildProcess(processFile, $"/i \"{fileName}\" /nologo");
                 Wl($"GAC installing: {fileName}", ConsoleColor.White);
                 RunProcess(p, fileName);
             }

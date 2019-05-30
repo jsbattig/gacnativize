@@ -41,7 +41,7 @@ namespace Ascentis.CmdTools
                 string fileName;
                 if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
-                var p = BuildProcess(processFile, $"install {fileName} /AppBase:{Path.GetDirectoryName(fileName)}");
+                var p = BuildProcess(processFile, $"install \"{fileName}\" /AppBase:{Path.GetDirectoryName(fileName)}");
                 Wl($"NGEN installing: {fileName}", ConsoleColor.White);
                 RunProcess(p, fileName);
             }
@@ -69,7 +69,7 @@ namespace Ascentis.CmdTools
                     continue;
                 }
 
-                var p = BuildProcess(processFile, $"uninstall {fileName}");
+                var p = BuildProcess(processFile, $"uninstall \"{fileName}\"");
                 Wl($"NGEN uninstalling: {fileName} ({assembly.FullName.Split(',')[0]})", ConsoleColor.White);
                 RunProcess(p, fileName);
             }

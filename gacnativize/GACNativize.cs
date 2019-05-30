@@ -23,7 +23,7 @@ namespace Ascentis.CmdTools
                 string[] sourceFiles;
                 IEnumerable<string> sourceAssemblies;
                 List<string> failedFilesList = null;
-                var exceptionsLogList = new List<string>();
+                List<string> exceptionsLogList;
                 var exceptionsLog = Path.Combine(sourcePath, "GACNat.log", "Exceptions.log");
                 int fileCount;
 
@@ -34,6 +34,7 @@ namespace Ascentis.CmdTools
                             return 0;
                         operationMode = OperationMode.install;
                         sourceFiles = File.ReadLines(exceptionsLog).ToArray();
+                        exceptionsLogList = new List<string>();
                         fileCount = sourceFiles.Length;
                         sourceAssemblies = sourceFiles;
                         mainCommand = "gn";
@@ -42,6 +43,7 @@ namespace Ascentis.CmdTools
                     case "gn":
                     case "n":
                         sourceFiles = Directory.EnumerateFiles(sourcePath, fileMask).ToArray();
+                        exceptionsLogList = File.Exists(exceptionsLog) ? File.ReadLines(exceptionsLog).ToList() : new List<string>();
                         fileCount = sourceFiles.Length;
                         sourceAssemblies = sourceFiles;
                         break;
@@ -90,10 +92,10 @@ namespace Ascentis.CmdTools
             {
                 if (!(e is Abort))
                     Console.WriteLine(e.Message);
-                Console.ReadLine();
+                // Console.ReadLine();
                 return -1;
             }
-            Console.ReadLine();
+            // Console.ReadLine();
             return 0;
         }
 
