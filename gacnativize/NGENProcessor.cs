@@ -12,7 +12,7 @@ namespace Ascentis.CmdTools
     {
         private static readonly string WindowsFolder = Environment.ExpandEnvironmentVariables("%windir%");
 
-        public NGENProcessor(List<string> failedFilesList, List<string> exceptionList) : base(failedFilesList, exceptionList){}
+        public NGENProcessor(List<string> exceptionList) : base(exceptionList){}
 
         protected override void PreprocessOutput(string fileName, string output, out ConsoleColor consoleColor)
         {
@@ -26,31 +26,27 @@ namespace Ascentis.CmdTools
 
             consoleColor = ConsoleColor.Yellow;
             // ReSharper disable once AssignNullToNotNullAttribute
-            var logFile = Path.Combine(fileDirectory, "GACNativize.log", $"{Path.GetFileName(fileName)}.ngenwarnings.log");
+            var logFile = Path.Combine(fileDirectory, "GACNat.log", $"{Path.GetFileName(fileName)}.ngenwarnings.log");
             // ReSharper disable once AssignNullToNotNullAttribute
             Directory.CreateDirectory(Path.GetDirectoryName(logFile));
             File.WriteAllText(logFile, output);
         }
 
         // ReSharper disable once InconsistentNaming
-        public void NGENInstall(IEnumerable<string> files, string frameworkVersion)
+        public List<string> NGENInstall(IEnumerable<string> files, string frameworkVersion)
         {
             var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework\{frameworkVersion}\ngen.exe";
             foreach (var file in files)
             {
                 string fileName;
-                if ((fileName = ProcessFileName(file)) == "")
-                {
-                    FailedFilesList.Add(file);
-                    continue;
-                }
-
-                if (ExcludeOrIgnore(fileName))
+                if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
                 var p = BuildProcess(processFile, $"install {fileName} /AppBase:{Path.GetDirectoryName(fileName)}");
                 Wl($"NGEN installing: {fileName}", ConsoleColor.White);
                 RunProcess(p, fileName);
             }
+
+            return FailedFilesList;
         }
 
         // ReSharper disable once InconsistentNaming
@@ -60,12 +56,7 @@ namespace Ascentis.CmdTools
             foreach (var file in files)
             {
                 string fileName;
-                if ((fileName = ProcessFileName(file)) == "")
-                {
-                    FailedFilesList.Add(file);
-                    continue;
-                }
-                if (ExcludeOrIgnore(fileName))
+                if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
                 Assembly assembly;
                 try

@@ -8,12 +8,11 @@ namespace Ascentis.CmdTools
     public class CmdProcessorBase
     {
         private static readonly ConsoleColor DefaultForegroundConsoleColor = Console.ForegroundColor;
-        protected List<string> FailedFilesList;
         protected List<string> ExceptionList;
+        protected List<string> FailedFilesList = new List<string>();
 
-        protected CmdProcessorBase(List<string> failedFilesList, List<string> exceptionList)
+        protected CmdProcessorBase(List<string> exceptionList)
         {
-            FailedFilesList = failedFilesList;
             ExceptionList = exceptionList;
         }
 
@@ -29,7 +28,7 @@ namespace Ascentis.CmdTools
             Wl(s, DefaultForegroundConsoleColor);
         }
 
-        protected static string ProcessFileName(string fileName)
+        private static string ProcessFileName(string fileName)
         {
             return fileName[0] == '-' ? "" : fileName;
         }
@@ -48,16 +47,19 @@ namespace Ascentis.CmdTools
             };
         }
 
-        protected bool ExcludeOrIgnore(string file)
+        protected string ExcludeOrIgnore(string file)
         {
-            if (ExceptionList == null)
-                return false;
-            if (ExceptionList.Contains("-" + file)) // Ignoring file completely
-                return true;
+            var newFileName = ProcessFileName(file);
+            if (newFileName == "" || ExceptionList.Contains("-" + file))
+            {
+                FailedFilesList.Add(file);
+                return "";
+            }
             if (!ExceptionList.Contains(file)) 
-                return false;
+                return newFileName;
+            FailedFilesList.Add(file);
             Wl($"Excluding file \"{file}\"\r\n", ConsoleColor.Yellow);
-            return true;
+            return "";
         }
 
         protected virtual void PreprocessOutput(string fileName, string output, out ConsoleColor consoleColor)

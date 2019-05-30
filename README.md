@@ -6,16 +6,18 @@ will not be processed.
 If any file name is preprended with a - (dash) sign it will be completely skipped and not even reported
 in the console.
 
-Usage:
+Usage: GACNativize <parameters>
 
-GACNativize -g|-gn|-n <folder> <filemask> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
-GACNativize -retry <folder> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
+--main-command      ret`ry|g|gn|n
+--source-path       Root folder where to look for assembly. Default = .\
+--operation-mode    install|uninstall. Default = install
+--file-mask         Specifies the mask to match assemblies in folder. Default = *.dll
+--win-version       Windows SDK version. Default = v10.0A
+--net-version       .NET target version for GAC operation. Default = 4.7.1
+--framework-version .NET framework tooling version. Default = v4.0.30319
 
--g Performs    GAC install only
--gn Performs   GAC and NGEN of matching assemblies
--n Performs    NGEN install only
-
-<folder>       Root folder where to look for assembly files
-<filemask>     The mask to match within the specified folder
-<winversion>   A string specifying the Windows SDK version. Default: v10.0A
-<.net version> .NET Framework version for NGEN tool. Default: 4.7.1
+--main-command values reference:
+retry  Retries failed operations logged in Exceptions.log file
+g      Performs GAC install only
+gn     Performs GAC and NGEN of matching assemblies
+n      Performs NGEN install only

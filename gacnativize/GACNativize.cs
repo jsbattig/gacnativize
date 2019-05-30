@@ -11,20 +11,20 @@ namespace Ascentis.CmdTools
     {
         // ReSharper disable once UnusedMember.Local
         private static int Main(string mainCommand, 
-                        string sourcePath = ".\\", 
-                        OperationMode operationMode = OperationMode.install, 
-                        string fileMask = "*.dll", 
-                        string winVersion = "v10.0A", 
-                        string netVersion = "4.7.1",
-                        string frameworkVersion = "v4.0.30319")
+                                string sourcePath = ".\\", 
+                                OperationMode operationMode = OperationMode.install, 
+                                string fileMask = "*.dll", 
+                                string winVersion = "v10.0A", 
+                                string netVersion = "4.7.1",
+                                string frameworkVersion = "v4.0.30319")
         {
             try
             {
                 string[] sourceFiles;
                 IEnumerable<string> sourceAssemblies;
-                List<string> failedFilesList;
-                List<string> exceptionsLogList = null;
-                var exceptionsLog = Path.Combine(sourcePath, "GACNativize.log", "Exceptions.log");
+                List<string> failedFilesList = null;
+                var exceptionsLogList = new List<string>();
+                var exceptionsLog = Path.Combine(sourcePath, "GACNat.log", "Exceptions.log");
                 int fileCount;
 
                 switch (mainCommand)
@@ -36,7 +36,6 @@ namespace Ascentis.CmdTools
                         sourceFiles = File.ReadLines(exceptionsLog).ToArray();
                         fileCount = sourceFiles.Length;
                         sourceAssemblies = sourceFiles;
-                        failedFilesList = new List<string>();
                         mainCommand = "gn";
                         break;
                     case "g":
@@ -45,10 +44,6 @@ namespace Ascentis.CmdTools
                         sourceFiles = Directory.EnumerateFiles(sourcePath, fileMask).ToArray();
                         fileCount = sourceFiles.Length;
                         sourceAssemblies = sourceFiles;
-                        failedFilesList = File.Exists(exceptionsLog)
-                            ? File.ReadLines(exceptionsLog).ToList()
-                            : new List<string>();
-                        exceptionsLogList = failedFilesList;
                         break;
                     default:
                         DisplayHelp();
@@ -61,29 +56,21 @@ namespace Ascentis.CmdTools
                     {
                         if (mainCommand.Contains("g"))
                         {
-                            new GACProcessor(failedFilesList, exceptionsLogList).GACInstall(sourceAssemblies,
-                                winVersion, netVersion);
+                            failedFilesList = new GACProcessor(exceptionsLogList).GACInstall(sourceAssemblies, winVersion, netVersion);
                             exceptionsLogList = failedFilesList;
                         }
-
                         if (mainCommand.Contains("n"))
-                            new NGENProcessor(failedFilesList, exceptionsLogList).NGENInstall(sourceAssemblies,
-                                frameworkVersion);
+                            failedFilesList = new NGENProcessor(exceptionsLogList).NGENInstall(sourceAssemblies, frameworkVersion);
                         break;
                     }
 
                     case OperationMode.uninstall:
                     {
-                        if (mainCommand.Contains("g"))
-                        {
-                            new GACProcessor(failedFilesList, exceptionsLogList).GACUninstall(sourceAssemblies,
-                                winVersion, netVersion);
-                            exceptionsLogList = failedFilesList;
-                        }
-
                         if (mainCommand.Contains("n"))
-                            new NGENProcessor(failedFilesList, exceptionsLogList).NGENUninstall(sourceAssemblies,
-                                frameworkVersion);
+                            new NGENProcessor(exceptionsLogList).NGENUninstall(sourceAssemblies, frameworkVersion);
+                        if (mainCommand.Contains("g"))
+                            new GACProcessor(exceptionsLogList).GACUninstall(sourceAssemblies,
+                                winVersion, netVersion);
                         break;
                     }
 
@@ -91,12 +78,13 @@ namespace Ascentis.CmdTools
                         throw new ArgumentOutOfRangeException();
                 }
 
-                Directory.CreateDirectory(Path.Combine(sourcePath, "GACNativize.log\\"));
-                if (failedFilesList.Count > 0)
-                    File.WriteAllLines(exceptionsLog, failedFilesList);
-                else
-                    File.Delete(exceptionsLog);
-                CmdProcessorBase.Wl($"Completed gacnativize process for {fileCount} input assemblies");
+                Directory.CreateDirectory(Path.Combine(sourcePath, "GACNat.log\\"));
+                if (failedFilesList != null)
+                    if (failedFilesList.Count > 0)
+                        File.WriteAllLines(exceptionsLog, failedFilesList);
+                    else
+                        File.Delete(exceptionsLog);
+                CmdProcessorBase.Wl($"Completed gacnat process for {fileCount} input assemblies");
             }
             catch (Exception e)
             {
@@ -118,8 +106,8 @@ namespace Ascentis.CmdTools
 
         private static void DisplayHelp()
         {
-            const string help = @"Welcome to Ascentis GACNativize! 
-Usage: GACNativize <parameters>
+            const string help = @"Welcome to Ascentis GACNat! 
+Usage: GACNat <parameters>
 
 --main-command      retry|g|gn|n
 --source-path       Root folder where to look for assembly. Default = .\

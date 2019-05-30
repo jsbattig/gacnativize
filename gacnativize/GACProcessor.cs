@@ -10,27 +10,23 @@ namespace Ascentis.CmdTools
     {
         private static readonly string ProgramFilesFolder = Environment.ExpandEnvironmentVariables("%systemdrive%\\Program Files (x86)");
 
-        public GACProcessor(List<string> failedFilesList, List<string> exceptionList) : base(failedFilesList, exceptionList){}
+        public GACProcessor(List<string> exceptionList) : base(exceptionList){}
 
         // ReSharper disable once InconsistentNaming
-        public void GACInstall(IEnumerable<string> files, string winVersion, string netVersion)
+        public List<string> GACInstall(IEnumerable<string> files, string winVersion, string netVersion)
         {
             var processFile = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\GACUTIL.exe";
             foreach (var file in files)
             {
                 string fileName;
-                if ((fileName = ProcessFileName(file)) == "")
-                {
-                    FailedFilesList.Add(file);
-                    continue;
-                }
-
-                if (ExcludeOrIgnore(fileName))
+                if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
                 var p = BuildProcess(processFile, $"/i {fileName} /nologo");
                 Wl($"GAC installing: {fileName}", ConsoleColor.White);
                 RunProcess(p, fileName);
             }
+
+            return FailedFilesList;
         }
 
         // ReSharper disable once InconsistentNaming
@@ -40,12 +36,7 @@ namespace Ascentis.CmdTools
             foreach (var file in files)
             {
                 string fileName;
-                if ((fileName = ProcessFileName(file)) == "")
-                {
-                    FailedFilesList.Add(file);
-                    continue;
-                }
-                if (ExcludeOrIgnore(fileName))
+                if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
                 Assembly assembly;
                 try
