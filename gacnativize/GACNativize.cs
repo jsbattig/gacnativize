@@ -6,97 +6,49 @@ using System.Linq;
 // ReSharper disable once CheckNamespace
 namespace Ascentis.CmdTools
 {
-    internal class Abort : Exception
-    {
-        public Abort() : base(""){}
-    }
-
     // ReSharper disable once InconsistentNaming
-    internal class GACNativize
+    class Program
     {
-        enum OperationMode
-        {
-            Install,
-            Uninstall
-        }
-
-        private static void DisplayHelp()
-        {
-            const string help = @"Welcome to Ascentis GACNativize! 
-This is Open Source software released under MIT license
-Usage: 
-
-GACNativize -g|-gn|-n <folder> <filemask> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
-GACNativize -retry <folder> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
-
--g Performs    GAC install only
--gn Performs   GAC and NGEN of matching assemblies
--n Performs    NGEN install only
-
-<folder>       Root folder where to look for assembly files
-<filemask>     The mask to match within the specified folder
-<winversion>   A string specifying the Windows SDK version. Default: v10.0A
-<.net version> .NET Framework version for NGEN tool. Default: 4.7.1
-";
-            Console.WriteLine(help);
-        }
-
-        private static void Main(string[] args)
+        // ReSharper disable once UnusedMember.Local
+        private static int Main(string mainCommand, 
+                        string sourcePath = ".\\", 
+                        OperationMode operationMode = OperationMode.install, 
+                        string fileMask = "", 
+                        string winVersion = "v10.0A", 
+                        string netVersion = "4.7.1",
+                        string frameworkVersion = "v4.0.30319")
         {
             try
             {
-                if (args.Length < 2)
-                {
-                    DisplayHelp();
-                    throw new Abort();
-                }
-
-                var path = args[1];
-                OperationMode operationMode;
+                string[] sourceFiles;
                 IEnumerable<string> sourceAssemblies;
                 List<string> failedFilesList;
                 List<string> exceptionsLogList = null;
-                var exceptionsLog = Path.Combine(path, "GACNativize.log", "Exceptions.log");
-                var winVersion = "v10.0A";
-                var netVersion = "4.7.1";
-                var frameworkVersion = "";
-                var mainCommand = args[0];
-                
+                var exceptionsLog = Path.Combine(sourcePath, "GACNativize.log", "Exceptions.log");
+                int fileCount;
+
                 switch (mainCommand)
                 {
-                    case "-retry":
-                        operationMode = OperationMode.Install;
-                        sourceAssemblies = File.ReadLines(exceptionsLog);
+                    case "retry":
+                        if (!File.Exists(exceptionsLog))
+                            return 0;
+                        operationMode = OperationMode.install;
+                        sourceFiles = File.ReadLines(exceptionsLog).ToArray();
+                        fileCount = sourceFiles.Length;
+                        sourceAssemblies = sourceFiles;
                         failedFilesList = new List<string>();
-                        if (args.Length >= 4)
-                            winVersion = args[3];
-                        if (args.Length == 5)
-                            netVersion = args[4];
-                        mainCommand = "-gn";
+                        mainCommand = "gn";
                         break;
-                    case "-g":
-                    case "-gn":
-                    case "-n":
-                        var mask = args[2];
-                        sourceAssemblies = Directory.EnumerateFiles(path, mask);
-                        failedFilesList = File.Exists(exceptionsLog) ? File.ReadLines(exceptionsLog).ToList() : new List<string>();
-                        exceptionsLogList = failedFilesList; 
-                        if (args.Length >= 5)
-                            winVersion = args[4];
-                        if (args.Length == 6)
-                            netVersion = args[5];
-                        switch (args[3])
-                        {
-                            case "install":
-                                operationMode = OperationMode.Install;
-                                break;
-                            case "uninstall":
-                                operationMode = OperationMode.Uninstall;
-                                break;
-                            default: 
-                                DisplayHelp();
-                                throw new Abort();
-                        }
+                    case "g":
+                    case "gn":
+                    case "n":
+                        sourceFiles = Directory.EnumerateFiles(sourcePath, fileMask).ToArray();
+                        fileCount = sourceFiles.Length;
+                        sourceAssemblies = sourceFiles;
+                        failedFilesList = File.Exists(exceptionsLog)
+                            ? File.ReadLines(exceptionsLog).ToList()
+                            : new List<string>();
+                        exceptionsLogList = failedFilesList;
                         break;
                     default:
                         DisplayHelp();
@@ -105,17 +57,33 @@ GACNativize -retry <folder> install|uninstall [[<winversion>]|<winversion>[<.net
 
                 switch (operationMode)
                 {
-                    case OperationMode.Install:
+                    case OperationMode.install:
                     {
                         if (mainCommand.Contains("g"))
-                            new GACProcessor(failedFilesList, exceptionsLogList).GACInstall(sourceAssemblies, winVersion, netVersion);
+                        {
+                            new GACProcessor(failedFilesList, exceptionsLogList).GACInstall(sourceAssemblies,
+                                winVersion, netVersion);
+                            exceptionsLogList = failedFilesList;
+                        }
+
+                        if (mainCommand.Contains("n"))
+                            new NGENProcessor(failedFilesList, exceptionsLogList).NGENInstall(sourceAssemblies,
+                                frameworkVersion);
                         break;
                     }
 
-                    case OperationMode.Uninstall:
+                    case OperationMode.uninstall:
                     {
                         if (mainCommand.Contains("g"))
-                            new GACProcessor(failedFilesList, exceptionsLogList).GACUninstall(sourceAssemblies, winVersion, netVersion);
+                        {
+                            new GACProcessor(failedFilesList, exceptionsLogList).GACUninstall(sourceAssemblies,
+                                winVersion, netVersion);
+                            exceptionsLogList = failedFilesList;
+                        }
+
+                        if (mainCommand.Contains("n"))
+                            new NGENProcessor(failedFilesList, exceptionsLogList).NGENUninstall(sourceAssemblies,
+                                frameworkVersion);
                         break;
                     }
 
@@ -123,18 +91,51 @@ GACNativize -retry <folder> install|uninstall [[<winversion>]|<winversion>[<.net
                         throw new ArgumentOutOfRangeException();
                 }
 
-                Directory.CreateDirectory(Path.Combine(path, "GACNativize.log\\"));
+                Directory.CreateDirectory(Path.Combine(sourcePath, "GACNativize.log\\"));
                 if (failedFilesList.Count > 0)
                     File.WriteAllLines(exceptionsLog, failedFilesList);
-                else 
+                else
                     File.Delete(exceptionsLog);
+                CmdProcessorBase.Wl($"Completed gacnativize process for {fileCount} input assemblies");
             }
             catch (Exception e)
             {
                 if (!(e is Abort))
                     Console.WriteLine(e.Message);
+                Console.ReadLine();
+                return -1;
             }
             Console.ReadLine();
+            return 0;
+        }
+
+        enum OperationMode
+        {
+            install,
+            // ReSharper disable once InconsistentNaming
+            uninstall
+        }
+
+        private static void DisplayHelp()
+        {
+            const string help = @"Welcome to Ascentis GACNativize! 
+Usage: GACNativize <parameters>
+
+--main-command      retry|g|gn|n
+--source-path       Root folder where to look for assembly. Default = .\
+--operation-mode    install|uninstall. Default = install
+--file-mask         Specifies the mask to match assemblies in folder. Default = *.dll
+--win-version       Windows SDK version. Default = v10.0A
+--net-version       .NET target version for GAC operation. Default = 4.7.1
+--framework-version .NET framework tooling version. Default = v4.0.30319
+
+--main-command values reference:
+retry  Retries failed operations logged in Exceptions.log file
+g      Performs GAC install only
+gn     Performs GAC and NGEN of matching assemblies
+n      Performs NGEN install only
+";
+            Console.WriteLine(help);
         }
     }
 }

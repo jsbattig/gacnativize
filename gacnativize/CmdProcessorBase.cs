@@ -17,14 +17,14 @@ namespace Ascentis.CmdTools
             ExceptionList = exceptionList;
         }
 
-        protected static void Wl(string s, ConsoleColor color)
+        public static void Wl(string s, ConsoleColor color)
         {
             Console.ForegroundColor = color;
             Console.WriteLine(s);
         }
 
         // ReSharper disable once UnusedMember.Local
-        protected static void Wl(string s)
+        public static void Wl(string s)
         {
             Wl(s, DefaultForegroundConsoleColor);
         }
@@ -60,14 +60,20 @@ namespace Ascentis.CmdTools
             return true;
         }
 
+        protected virtual void PreprocessOutput(string fileName, string output, out ConsoleColor consoleColor)
+        {
+            consoleColor = ConsoleColor.Green;
+        }
+
         protected void RunProcess(Process p, string file)
         {
             p.Start();
             var output = p.StandardOutput.ReadToEnd();
+            PreprocessOutput(file, output, out var consoleColor);
             p.WaitForExit();
             if (p.ExitCode != 0)
                 FailedFilesList.Add(file);
-            Wl(output, p.ExitCode == 0 ? ConsoleColor.Green : ConsoleColor.Red);
+            Wl(output, p.ExitCode == 0 ? consoleColor : ConsoleColor.Red);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Ascentis.CmdTools
                 if (ExcludeOrIgnore(fileName))
                     continue;
                 var p = BuildProcess(processFile, $"/i {fileName} /nologo");
-                Wl($"Processing: {fileName}", ConsoleColor.White);
+                Wl($"GAC installing: {fileName}", ConsoleColor.White);
                 RunProcess(p, fileName);
             }
         }
@@ -59,7 +59,7 @@ namespace Ascentis.CmdTools
                 }
 
                 var p = BuildProcess(processFile, $"/u {assembly.FullName.Split(',')[0]} /nologo");
-                Wl($"Processing: {fileName} ({assembly.FullName.Split(',')[0]})", ConsoleColor.White);
+                Wl($"GAC uninstalling: {fileName} ({assembly.FullName.Split(',')[0]})", ConsoleColor.White);
                 RunProcess(p, fileName);
             }
         }
