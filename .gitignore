@@ -1,0 +1,9 @@
+[Bb]in/
+[Oo]bj/
+*.suo
+*.user
+._.DS_Store
+.DS_Store
+*.psess
+*.log
+/.vs/
