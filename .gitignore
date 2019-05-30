@@ -7,3 +7,4 @@
 *.psess
 *.log
 /.vs/
+/packages/

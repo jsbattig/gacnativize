@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading;
 
 // ReSharper disable once CheckNamespace
 namespace Ascentis.CmdTools
@@ -24,154 +20,114 @@ namespace Ascentis.CmdTools
             Uninstall
         }
 
-        private static readonly string ProgramFilesFolder = Environment.ExpandEnvironmentVariables("%systemdrive%\\Program Files (x86)");
-        private static readonly ConsoleColor DefaultForegroundConsoleColor = Console.ForegroundColor;
-
-        static void DisplayHelp()
+        private static void DisplayHelp()
         {
-            const string help = @"Usage: GACNativize <folder> <filemask> install|uninstall [[<winversion>]|<winversion>[<.net version>]]";
+            const string help = @"Welcome to Ascentis GACNativize! 
+This is Open Source software released under MIT license
+Usage: 
+
+GACNativize -g|-gn|-n <folder> <filemask> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
+GACNativize -retry <folder> install|uninstall [[<winversion>]|<winversion>[<.net version>]]
+
+-g Performs    GAC install only
+-gn Performs   GAC and NGEN of matching assemblies
+-n Performs    NGEN install only
+
+<folder>       Root folder where to look for assembly files
+<filemask>     The mask to match within the specified folder
+<winversion>   A string specifying the Windows SDK version. Default: v10.0A
+<.net version> .NET Framework version for NGEN tool. Default: 4.7.1
+";
             Console.WriteLine(help);
-        }
-
-        private static void Wl(string s, ConsoleColor color)
-        {
-            Console.ForegroundColor = color;
-            Console.WriteLine(s);
-        }
-
-        // ReSharper disable once UnusedMember.Local
-        private static void Wl(string s)
-        {
-            Wl(s, DefaultForegroundConsoleColor);
-        }
-
-        private static Process BuildProcess(string processParams, string winVersion, string netVersion)
-        {
-            return new Process
-            {
-                StartInfo =
-                {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    FileName = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\GACUTIL.exe",
-                    Arguments = processParams
-                }
-            };
-        }
-
-        private static void RunProcess(Process p, string file, List<string> failedFilesList)
-        {
-            p.Start();
-            var output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
-            if (p.ExitCode != 0)
-                failedFilesList.Add(file);
-            Wl(output, p.ExitCode == 0 ? ConsoleColor.Green : ConsoleColor.Red);
-        }
-
-        // ReSharper disable once InconsistentNaming
-        private static List<string> GACInstall(IEnumerable<string> files, List<string> failedFilesList, string winVersion, string netVersion)
-        {
-            if (failedFilesList == null)
-                failedFilesList = new List<string>();
-            foreach (var file in files)
-            {
-                if (failedFilesList.Contains(file))
-                {
-                    Wl($"Excluding file \"{file}\"\r\n", ConsoleColor.Yellow);
-                    continue;
-                }
-
-                var p = BuildProcess($"/i {file} /nologo", winVersion, netVersion);
-                Wl($"Processing: {file}", ConsoleColor.White);
-                RunProcess(p, file, failedFilesList);
-            }
-
-            return failedFilesList;
-        }
-
-        // ReSharper disable once InconsistentNaming
-        private static List<string> GACUninstall(IEnumerable<string> files, List<string> failedFilesList, string winVersion, string netVersion)
-        {
-            if (failedFilesList == null)
-                failedFilesList = new List<string>();
-            foreach (var file in files)
-            {
-                if (failedFilesList.Contains(file))
-                {
-                    Wl($"Excluding file \"{file}\"\r\n", ConsoleColor.Yellow);
-                    continue;
-                }
-
-                Assembly assembly;
-                try
-                {
-                    assembly = Assembly.ReflectionOnlyLoadFrom(file);
-                }
-                catch (Exception e)
-                {
-                    Wl($"Exception processing file \"{file}\". Message: {e.Message}", ConsoleColor.Red);
-                    continue;
-                }
-
-                var p = BuildProcess($"/u {assembly.FullName.Split(',')[0]} /nologo", winVersion, netVersion);
-                Wl($"Processing: {file} ({assembly.FullName.Split(',')[0]})", ConsoleColor.White);
-                RunProcess(p, file, failedFilesList);
-            }
-
-            return failedFilesList;
         }
 
         private static void Main(string[] args)
         {
             try
             {
-                if(args.Length < 3)
-                    DisplayHelp();
-                var path = args[0];
-                var mask = args[1];
-                var winVersion = args.Length == 4 ? args[3] : "v10.0A";
-                var netVersion = args.Length == 5 ? args[4] : "4.7.1";
-                OperationMode operationMode;
-                switch (args[2])
+                if (args.Length < 2)
                 {
-                    case "install":
+                    DisplayHelp();
+                    throw new Abort();
+                }
+
+                var path = args[1];
+                OperationMode operationMode;
+                IEnumerable<string> sourceAssemblies;
+                List<string> failedFilesList;
+                List<string> exceptionsLogList = null;
+                var exceptionsLog = Path.Combine(path, "GACNativize.log", "Exceptions.log");
+                var winVersion = "v10.0A";
+                var netVersion = "4.7.1";
+                var frameworkVersion = "";
+                var mainCommand = args[0];
+                
+                switch (mainCommand)
+                {
+                    case "-retry":
                         operationMode = OperationMode.Install;
+                        sourceAssemblies = File.ReadLines(exceptionsLog);
+                        failedFilesList = new List<string>();
+                        if (args.Length >= 4)
+                            winVersion = args[3];
+                        if (args.Length == 5)
+                            netVersion = args[4];
+                        mainCommand = "-gn";
                         break;
-                    case "uninstall":
-                        operationMode = OperationMode.Uninstall;
+                    case "-g":
+                    case "-gn":
+                    case "-n":
+                        var mask = args[2];
+                        sourceAssemblies = Directory.EnumerateFiles(path, mask);
+                        failedFilesList = File.Exists(exceptionsLog) ? File.ReadLines(exceptionsLog).ToList() : new List<string>();
+                        exceptionsLogList = failedFilesList; 
+                        if (args.Length >= 5)
+                            winVersion = args[4];
+                        if (args.Length == 6)
+                            netVersion = args[5];
+                        switch (args[3])
+                        {
+                            case "install":
+                                operationMode = OperationMode.Install;
+                                break;
+                            case "uninstall":
+                                operationMode = OperationMode.Uninstall;
+                                break;
+                            default: 
+                                DisplayHelp();
+                                throw new Abort();
+                        }
                         break;
-                    default: DisplayHelp();
+                    default:
+                        DisplayHelp();
                         throw new Abort();
                 }
-                
-                var failedFilesLog = Path.Combine(path, "GACNativize.FailedInstall.log");
-                List<string> failedFilesList = null;
-                if (File.Exists(failedFilesLog))
-                    failedFilesList = File.ReadLines(failedFilesLog).ToList();
-                var sourceAssemblies = Directory.EnumerateFiles(path, mask);
+
                 switch (operationMode)
                 {
                     case OperationMode.Install:
                     {
-                        failedFilesList = GACInstall(sourceAssemblies, failedFilesList, winVersion, netVersion);
-                        if (failedFilesList.Count > 0)
-                            File.WriteAllLines(failedFilesLog, failedFilesList);
+                        if (mainCommand.Contains("g"))
+                            new GACProcessor(failedFilesList, exceptionsLogList).GACInstall(sourceAssemblies, winVersion, netVersion);
                         break;
                     }
 
                     case OperationMode.Uninstall:
                     {
-                        var failedUninstallFilesLog = Path.Combine(path, "GACNativize.FailedUninstall.log");
-                        failedFilesList = GACUninstall(sourceAssemblies, failedFilesList, winVersion, netVersion);
-                        if (failedFilesList.Count > 0)
-                            File.WriteAllLines(failedUninstallFilesLog, failedFilesList);
+                        if (mainCommand.Contains("g"))
+                            new GACProcessor(failedFilesList, exceptionsLogList).GACUninstall(sourceAssemblies, winVersion, netVersion);
                         break;
                     }
 
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+                Directory.CreateDirectory(Path.Combine(path, "GACNativize.log\\"));
+                if (failedFilesList.Count > 0)
+                    File.WriteAllLines(exceptionsLog, failedFilesList);
+                else 
+                    File.Delete(exceptionsLog);
             }
             catch (Exception e)
             {
