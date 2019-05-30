@@ -13,7 +13,7 @@ namespace Ascentis.CmdTools
         private static int Main(string mainCommand, 
                         string sourcePath = ".\\", 
                         OperationMode operationMode = OperationMode.install, 
-                        string fileMask = "", 
+                        string fileMask = "*.dll", 
                         string winVersion = "v10.0A", 
                         string netVersion = "4.7.1",
                         string frameworkVersion = "v4.0.30319")
