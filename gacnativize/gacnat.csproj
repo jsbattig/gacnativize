@@ -66,6 +66,11 @@
   <ItemGroup>
     <Compile Include="Abort.cs" />
     <Compile Include="CmdProcessorBase.cs" />
+    <Compile Include="GacnatResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>GacnatResources.resx</DependentUpon>
+    </Compile>
     <Compile Include="GACNativize.cs" />
     <Compile Include="GACProcessor.cs" />
     <Compile Include="NGENProcessor.cs" />
@@ -92,6 +97,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="GacnatResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GacnatResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

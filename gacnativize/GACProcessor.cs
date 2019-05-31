@@ -10,7 +10,7 @@ namespace Ascentis.CmdTools
     {
         private static readonly string ProgramFilesFolder = Environment.ExpandEnvironmentVariables("%systemdrive%\\Program Files (x86)");
 
-        public GACProcessor(List<string> exceptionList) : base(exceptionList){}
+        public GACProcessor(List<string> exceptionList, string logFolder) : base(exceptionList, logFolder){}
 
         // ReSharper disable once InconsistentNaming
         public List<string> GACInstall(IEnumerable<string> files, string winVersion, string netVersion)
@@ -49,7 +49,7 @@ namespace Ascentis.CmdTools
                     continue;
                 }
 
-                var p = BuildProcess(processFile, $"/u {assembly.FullName.Split(',')[0]} /nologo");
+                var p = BuildProcess(processFile, $"/u \"{assembly.FullName.Split(',')[0]}\" /nologo");
                 Wl($"GAC uninstalling: {fileName} ({assembly.FullName.Split(',')[0]})", ConsoleColor.White);
                 RunProcess(p, fileName);
             }

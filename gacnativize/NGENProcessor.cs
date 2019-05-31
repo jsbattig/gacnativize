@@ -12,13 +12,13 @@ namespace Ascentis.CmdTools
     {
         private static readonly string WindowsFolder = Environment.ExpandEnvironmentVariables("%windir%");
 
-        public NGENProcessor(List<string> exceptionList) : base(exceptionList){}
+        public NGENProcessor(List<string> exceptionList, string logFolder) : base(exceptionList, logFolder){}
 
         protected override void PreprocessOutput(string fileName, string output, out ConsoleColor consoleColor)
         {
             var fileDirectory = Path.GetDirectoryName(fileName);
-            var lineCount = output.Count(c => c == '\r');
-            if (lineCount <= 3)
+            var failureExistence = output.IndexOf("Failed to load dependency", StringComparison.Ordinal);
+            if (failureExistence < 0)
             {
                 consoleColor = ConsoleColor.Green;
                 return;
@@ -26,14 +26,14 @@ namespace Ascentis.CmdTools
 
             consoleColor = ConsoleColor.Yellow;
             // ReSharper disable once AssignNullToNotNullAttribute
-            var logFile = Path.Combine(fileDirectory, "GACNat.log", $"{Path.GetFileName(fileName)}.ngenwarnings.log");
+            var logFile = Path.Combine(fileDirectory, LogFolder, $"{Path.GetFileName(fileName)}.ngenwarnings.log");
             // ReSharper disable once AssignNullToNotNullAttribute
             Directory.CreateDirectory(Path.GetDirectoryName(logFile));
             File.WriteAllText(logFile, output);
         }
 
         // ReSharper disable once InconsistentNaming
-        public List<string> NGENInstall(IEnumerable<string> files, string frameworkVersion)
+        public List<string> NGENInstall(IEnumerable<string> files, string frameworkVersion, string templateAppConfig)
         {
             var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework\{frameworkVersion}\ngen.exe";
             foreach (var file in files)
@@ -41,9 +41,19 @@ namespace Ascentis.CmdTools
                 string fileName;
                 if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
-                var p = BuildProcess(processFile, $"install \"{fileName}\" /AppBase:{Path.GetDirectoryName(fileName)}");
-                Wl($"NGEN installing: {fileName}", ConsoleColor.White);
-                RunProcess(p, fileName);
+                var fakeExe = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(templateAppConfig)) + ".exe");
+                File.Copy(fileName, fakeExe);
+                try
+                {
+                    var p = BuildProcess(processFile,
+                        $"install \"{fileName}\" /ExeConfig:{fakeExe}"); // /AppBase:{Path.GetDirectoryName(fileName)}
+                    Wl($"NGEN installing: {fileName}", ConsoleColor.White);
+                    RunProcess(p, fileName);
+                }
+                finally
+                {
+                    File.Delete(fakeExe);
+                }
             }
 
             return FailedFilesList;

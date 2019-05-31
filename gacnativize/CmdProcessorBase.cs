@@ -11,10 +11,12 @@ namespace Ascentis.CmdTools
         private static readonly ConsoleColor DefaultForegroundConsoleColor = Console.ForegroundColor;
         protected List<string> ExceptionList;
         protected List<string> FailedFilesList = new List<string>();
+        protected string LogFolder;
 
-        protected CmdProcessorBase(List<string> exceptionList)
+        protected CmdProcessorBase(List<string> exceptionList, string logFolder)
         {
             ExceptionList = exceptionList;
+            LogFolder = logFolder;
         }
 
         public static void Wl(string s, ConsoleColor color)
