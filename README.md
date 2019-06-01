@@ -10,17 +10,30 @@ in the console as skipped. Use this for know files such as native Windows dll fi
 **Usage**: GACNat [parameters]
 
 **--main-command**        retry | g | gn | n
+
 **--source-path**         Root folder where to look for assembly. Default = .\
+
 **--operation-mode**      install|uninstall|reinstall. Default = install
+
 **--file-mask**           Specifies the mask to match assemblies in folder. Default = *.dll
+
 **--win-version**         Windows SDK version. Default = v10.0A
+
 **--net-version**         .NET target version for GAC operation. Default = 4.7.1
+
 **--framework-version**   .NET framework tooling version. Default = v4.0.30319
+
 **--template-app-config** App.config file used with NGEN to resolve assemblies with version mismatches
+
 **--log-folder**          Directory where to store exceptions.log file and ngen warning files
 
+
 **--main-command values reference:**
+
 **retry**  Retries failed operations logged in Exceptions.log file
+
 **g**      Performs GAC install only
+
 **gn**     Performs GAC and NGEN of matching assemblies
+
 **n**      Performs NGEN install only
