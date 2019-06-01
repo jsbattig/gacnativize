@@ -6,15 +6,17 @@ will not be processed.
 If any file name is preprended with a - (dash) sign it will be completely skipped and not even reported
 in the console.
 
-Usage: GACNativize <parameters>
+Usage: GACNat <parameters>
 
---main-command      ret`ry|g|gn|n
---source-path       Root folder where to look for assembly. Default = .\
---operation-mode    install|uninstall. Default = install
---file-mask         Specifies the mask to match assemblies in folder. Default = *.dll
---win-version       Windows SDK version. Default = v10.0A
---net-version       .NET target version for GAC operation. Default = 4.7.1
---framework-version .NET framework tooling version. Default = v4.0.30319
+--main-command        retry|g|gn|n
+--source-path         Root folder where to look for assembly. Default = .\
+--operation-mode      install|uninstall|reinstall. Default = install
+--file-mask           Specifies the mask to match assemblies in folder. Default = *.dll
+--win-version         Windows SDK version. Default = v10.0A
+--net-version         .NET target version for GAC operation. Default = 4.7.1
+--framework-version   .NET framework tooling version. Default = v4.0.30319
+--template-app-config App.config file used with NGEN to resolve assemblies with version mismatches
+--log-folder          Directory where to store exceptions.log file and ngen warning files
 
 --main-command values reference:
 retry  Retries failed operations logged in Exceptions.log file
