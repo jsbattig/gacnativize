@@ -10,12 +10,13 @@ namespace Ascentis.CmdTools
     {
         private static readonly string ProgramFilesFolder = Environment.ExpandEnvironmentVariables("%systemdrive%\\Program Files (x86)");
 
-        public GACProcessor(List<string> exceptionList, string logFolder) : base(exceptionList, logFolder){}
+        public GACProcessor(List<string> exceptionList, string logFolder,  bool useX64Tooling) : base(exceptionList, logFolder, useX64Tooling){}
 
         // ReSharper disable once InconsistentNaming
         public List<string> GACInstall(IEnumerable<string> files, string winVersion, string netVersion)
         {
-            var processFile = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\GACUTIL.exe";
+            var x64SubPath = UseX64Tooling ? "x64\\" : "";
+            var processFile = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\{x64SubPath}GACUTIL.exe";
             foreach (var file in files)
             {
                 string fileName;

@@ -12,11 +12,13 @@ namespace Ascentis.CmdTools
         protected List<string> ExceptionList;
         protected List<string> FailedFilesList = new List<string>();
         protected string LogFolder;
+        protected bool UseX64Tooling;
 
-        protected CmdProcessorBase(List<string> exceptionList, string logFolder)
+        protected CmdProcessorBase(List<string> exceptionList, string logFolder, bool useX64Tooling)
         {
             ExceptionList = exceptionList;
             LogFolder = logFolder;
+            UseX64Tooling = useX64Tooling;
         }
 
         public static void Wl(string s, ConsoleColor color)

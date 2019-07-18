@@ -130,6 +130,7 @@ Usage: GACNat &lt;parameters&gt;
 --framework-version   .NET framework tooling version. Default = v4.0.30319
 --template-app-config App.config file used with NGEN to resolve assemblies with version mismatches
 --log-folder          Directory where to store exceptions.log file and ngen warning files
+--useX64Tooling       true|false . Specifies is using 64 bits tooling. Default = true
 
 --main-command values reference:
 retry  Retries failed operations logged in Exceptions.log file

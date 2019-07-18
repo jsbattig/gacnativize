@@ -26,7 +26,8 @@ namespace Ascentis.CmdTools
                                 string netVersion = "4.7.1",
                                 string frameworkVersion = "v4.0.30319",
                                 string templateAppConfig = "",
-                                string logFolder = "GACNat.log")
+                                string logFolder = "GACNat.log",
+                                bool useX64Tooling = true)
         {
             try
             {
@@ -68,20 +69,20 @@ namespace Ascentis.CmdTools
                     {
                         if (mainCommand.Contains("g"))
                         {
-                            failedFilesList = new GACProcessor(exceptionsLogList, logFolder).GACInstall(sourceAssemblies, winVersion, netVersion);
+                            failedFilesList = new GACProcessor(exceptionsLogList, logFolder, useX64Tooling).GACInstall(sourceAssemblies, winVersion, netVersion);
                             exceptionsLogList = failedFilesList;
                         }
                         if (mainCommand.Contains("n"))
-                            failedFilesList = new NGENProcessor(exceptionsLogList, logFolder).NGENInstall(sourceAssemblies, frameworkVersion, templateAppConfig);
+                            failedFilesList = new NGENProcessor(exceptionsLogList, logFolder, useX64Tooling).NGENInstall(sourceAssemblies, frameworkVersion, templateAppConfig);
                         break;
                     }
 
                     case OperationMode.uninstall:
                     {
                         if (mainCommand.Contains("n"))
-                            new NGENProcessor(exceptionsLogList, logFolder).NGENUninstall(sourceAssemblies, frameworkVersion);
+                            new NGENProcessor(exceptionsLogList, logFolder, useX64Tooling).NGENUninstall(sourceAssemblies, frameworkVersion);
                         if (mainCommand.Contains("g"))
-                            new GACProcessor(exceptionsLogList, logFolder).GACUninstall(sourceAssemblies, winVersion, netVersion);
+                            new GACProcessor(exceptionsLogList, logFolder, useX64Tooling).GACUninstall(sourceAssemblies, winVersion, netVersion);
                         break;
                     }
 
@@ -89,15 +90,15 @@ namespace Ascentis.CmdTools
                     {
                         if (mainCommand.Contains("g"))
                         {
-                            new GACProcessor(exceptionsLogList, logFolder).GACUninstall(sourceAssemblies, winVersion, netVersion);
-                            failedFilesList = new GACProcessor(exceptionsLogList, logFolder).GACInstall(sourceAssemblies, winVersion, netVersion);
+                            new GACProcessor(exceptionsLogList, logFolder, useX64Tooling).GACUninstall(sourceAssemblies, winVersion, netVersion);
+                            failedFilesList = new GACProcessor(exceptionsLogList, logFolder, useX64Tooling).GACInstall(sourceAssemblies, winVersion, netVersion);
                             exceptionsLogList = failedFilesList;
                         }
 
                         if (mainCommand.Contains("n"))
                         {
-                            new GACProcessor(exceptionsLogList, logFolder).GACUninstall(sourceAssemblies, winVersion, netVersion);
-                            failedFilesList = new NGENProcessor(exceptionsLogList, logFolder).NGENInstall(sourceAssemblies, frameworkVersion, templateAppConfig);
+                            new GACProcessor(exceptionsLogList, logFolder, useX64Tooling).GACUninstall(sourceAssemblies, winVersion, netVersion);
+                            failedFilesList = new NGENProcessor(exceptionsLogList, logFolder, useX64Tooling).NGENInstall(sourceAssemblies, frameworkVersion, templateAppConfig);
                         }
 
                         break;

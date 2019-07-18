@@ -27,6 +27,8 @@ in the console as skipped. Use this for know files such as native Windows dll fi
 
 **--log-folder**          Directory where to store exceptions.log file and ngen warning files
 
+**--useX64Tooling**       true|false . Specifies is using 64 bits tooling. Default = true
+
 
 **--main-command values reference:**
 

@@ -12,7 +12,7 @@ namespace Ascentis.CmdTools
     {
         private static readonly string WindowsFolder = Environment.ExpandEnvironmentVariables("%windir%");
 
-        public NGENProcessor(List<string> exceptionList, string logFolder) : base(exceptionList, logFolder){}
+        public NGENProcessor(List<string> exceptionList, string logFolder, bool useX64Tooling) : base(exceptionList, logFolder, useX64Tooling){}
 
         protected override void PreprocessOutput(string fileName, string output, out ConsoleColor consoleColor)
         {
@@ -35,14 +35,15 @@ namespace Ascentis.CmdTools
         // ReSharper disable once InconsistentNaming
         public List<string> NGENInstall(IEnumerable<string> files, string frameworkVersion, string templateAppConfig)
         {
-            var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework\{frameworkVersion}\ngen.exe";
+            var x64SubPath = UseX64Tooling ? "64" : "";
+            var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework{x64SubPath}\{frameworkVersion}\ngen.exe";
             foreach (var file in files)
             {
                 string fileName;
                 if ((fileName = ExcludeOrIgnore(file)) == "")
                     continue;
                 var fakeExe = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(templateAppConfig)) + ".exe");
-                File.Copy(fileName, fakeExe);
+                File.Copy(fileName, fakeExe, true);
                 try
                 {
                     var p = BuildProcess(processFile,
