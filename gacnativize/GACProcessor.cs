@@ -33,7 +33,8 @@ namespace Ascentis.CmdTools
         // ReSharper disable once InconsistentNaming
         public void GACUninstall(IEnumerable<string> files, string winVersion, string netVersion)
         {
-            var processFile = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\GACUTIL.exe";
+            var x64SubPath = UseX64Tooling ? "x64\\" : "";
+            var processFile = $@"{ProgramFilesFolder}\Microsoft SDKs\Windows\{winVersion}\bin\NETFX {netVersion} Tools\{x64SubPath}GACUTIL.exe";
             foreach (var file in files)
             {
                 string fileName;

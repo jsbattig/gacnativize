@@ -63,7 +63,8 @@ namespace Ascentis.CmdTools
         // ReSharper disable once InconsistentNaming
         public void NGENUninstall(IEnumerable<string> files, string frameworkVersion)
         {
-            var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework\{frameworkVersion}\ngen.exe";
+            var x64SubPath = UseX64Tooling ? "64" : "";
+            var processFile = $@"{WindowsFolder}\Microsoft.NET\Framework{x64SubPath}\{frameworkVersion}\ngen.exe";
             foreach (var file in files)
             {
                 string fileName;
